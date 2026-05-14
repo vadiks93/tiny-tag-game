@@ -19,7 +19,7 @@ Tiny Tag Game is a small Matter.js browser game with two circular players. One p
 
 - `index.html`: page shell, HUD, log button, script loading.
 - `server.js`: optional static server.
-- `assets/`: SVG player icons used for the canvas-drawn player visuals.
+- `assets/`: optional SVG assets kept in the repo, not used for current player rendering.
 - `js/game-rules.js`: small shared rules/helpers that can be unit tested in Node.
 - `js/components/player-setup-field.js`: player setup row web component.
 - `js/components/game-welcome.js`: start modal web component.
@@ -36,6 +36,7 @@ Setup fields:
 - Blue player name, default `Replaceable Human`.
 - Single player checkbox appears on the blue player row. When enabled, red becomes the automated player and the red name input is disabled.
 - Red player name, default `Mischievous AI`.
+- On mobile, the red player setup row is hidden because Single Player is forced and the default AI name is used.
 - A single switch on the blue player row controls roles: on means blue escapes, off means red escapes.
 - Seconds to catch, default `60`, clamped from `5` to `180`.
 - Max traps, default `3`, clamped from `1` to `12`.
@@ -73,7 +74,7 @@ Behavior:
 - If auto red player is enabled, red movement is controlled by simple AI instead of `W`, `A`, `S`, `D`.
 - If auto red player is enabled, the control hint shows only the blue arrow controls and centers them near the bottom.
 - On touch/mobile devices, Single Player is forced because two-player controls work better on desktop.
-- On touch/mobile single-player, tapping the arena moves blue toward the tapped point instead of relying on arrow controls.
+- On touch/mobile single-player, larger virtual arrow controls are placed on the left side for blue movement.
 - On touch/mobile, a virtual shoot button appears under the HUD only when blue/human is catching.
 - Touch/mobile movement speed is slightly reduced for better control.
 - Holding exactly one movement direction builds a capped acceleration bonus over a short ramp. Changing direction, pressing multiple directions, or moving diagonally resets that bonus.
@@ -166,7 +167,7 @@ The Matter world includes:
 - ceiling
 - left wall
 - right wall
-- one initial diagonal line
+- three initial straight obstacle lines
 - random chaos lines
 - players start near opposite horizontal sides so the round begins with more distance
 
@@ -255,7 +256,6 @@ Rules:
 
 Canvas-only visuals live in `js/effects.js`:
 
-- player SVG icons drawn over colored fallback badges while the Matter bodies remain circular
 - player names
 - catcher center dot
 - rotating aim line

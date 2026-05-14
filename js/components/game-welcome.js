@@ -189,6 +189,7 @@
 
             if (mobileSetup) {
                 playerField.singlePlayerDisabled = true;
+                aiField.hidden = true;
             }
 
             this.shadowRoot.addEventListener('escaping-change', (event) => {

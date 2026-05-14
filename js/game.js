@@ -21,7 +21,6 @@
     const initialLineWidth = Math.min(isMobileViewport ? 380 : 500, width * (isMobileViewport ? 0.5 : 0.62));
     const obstacleThickness = Math.max(2.5, 5 * mobileScale);
     const initialLineThickness = obstacleThickness;
-    const playerIconSize = playerRadius * 2.55;
     const state = {
         playerName: 'Replaceable Human',
         aiName: 'Mischievous AI',
@@ -49,7 +48,6 @@
     let powerPickup = null;
     let catcherHasPowerShot = false;
     let nextChaosLineIsHorizontal = true;
-    let blueTapTarget = null;
 
     const chaosLines = [];
     const bombs = [];
@@ -69,8 +67,6 @@
         escapeUntil: 0,
         directions: []
     };
-    const humanIcon = createIconImage('./assets/running-svgrepo-com.svg');
-    const aiIcon = createIconImage('./assets/screeps-svgrepo-com.svg');
     const welcomeModal = document.querySelector('game-welcome');
     const engine = Engine.create();
     const render = Render.create({
@@ -84,19 +80,19 @@
         }
     });
 
-    const player = Bodies.circle(width * 0.82, height * 0.25, playerRadius, {
+    const player = Bodies.circle(width * 0.82, height * 0.05, playerRadius, {
         label: state.playerName,
         restitution: 0.8,
         frictionAir: 0.04,
         collisionFilter: { group: -1 },
-        render: { visible: false }
+        render: { fillStyle: '#2f80ed' }
     });
-    const aiPlayer = Bodies.circle(width * 0.18, height * 0.25, playerRadius, {
+    const aiPlayer = Bodies.circle(width * 0.18, height * 0.95, playerRadius, {
         label: state.aiName,
         restitution: 0.8,
         frictionAir: 0.035,
         collisionFilter: { group: -1 },
-        render: { visible: false }
+        render: { fillStyle: '#eb5757' }
     });
     const ground = Bodies.rectangle(width / 2, height - groundHeight / 2, width, groundHeight, {
         isStatic: true,
@@ -119,10 +115,22 @@
         angle: 0,
         render: { fillStyle: '#6b7280' }
     });
+    const startLineA = Bodies.rectangle(width * 0.34, height * 0.34, initialLineWidth * 0.48, initialLineThickness, {
+        isStatic: true,
+        angle: Math.PI / 2,
+        render: { fillStyle: '#27ae60' }
+    });
+    const startLineB = Bodies.rectangle(width * 0.66, height * 0.62, initialLineWidth * 0.48, initialLineThickness, {
+        isStatic: true,
+        angle: 0,
+        render: { fillStyle: '#f2994a' }
+    });
     const runner = Runner.create();
 
     Composite.add(engine.world, [
         line,
+        startLineA,
+        startLineB,
         player,
         aiPlayer,
         ground,
@@ -158,8 +166,6 @@
         }
 
         if (explodedBody !== player) {
-            effects.drawPlayerIcon(context, humanIcon, player.position.x, player.position.y, playerIconSize, '#2f80ed');
-
             if (catcherBody === player) {
                 effects.drawRotatingAimLine(context, player.position.x, player.position.y, getAimAngle(), mobileScale);
                 effects.drawInnerCircle(context, player.position.x, player.position.y, mobileScale);
@@ -169,8 +175,6 @@
         }
 
         if (explodedBody !== aiPlayer) {
-            effects.drawPlayerIcon(context, aiIcon, aiPlayer.position.x, aiPlayer.position.y, playerIconSize, '#eb5757');
-
             if (catcherBody === aiPlayer) {
                 effects.drawRotatingAimLine(context, aiPlayer.position.x, aiPlayer.position.y, getAimAngle(), mobileScale);
                 effects.drawInnerCircle(context, aiPlayer.position.x, aiPlayer.position.y, mobileScale);
@@ -239,7 +243,6 @@
         aiPlayer.label = state.aiName;
         state.gameStarted = true;
         state.gameOver = false;
-        blueTapTarget = null;
         lastShotAt = 0;
         lastAutoShotAt = 0;
         explodedBody = null;
@@ -258,15 +261,10 @@
         startPowerSpawns();
 
         ui.log('Tiny Tag Game started.');
-        if (isTapToMoveMode()) {
-            ui.setControlsMode(true);
-            ui.log('Tap anywhere in the arena to move the blue player.');
-        } else {
-            ui.showControlsHint({
-                autoHide: !isTouchDevice(),
-                singlePlayerAuto: state.autoRed
-            });
-        }
+        ui.showControlsHint({
+            autoHide: !isTouchDevice(),
+            singlePlayerAuto: state.autoRed
+        });
         updateMobileShootButton();
         ui.log(`${state.playerName} is the blue circle and is ${state.playerRole}.`);
         ui.log(`${state.aiName} is the red circle and is ${state.aiRole}.`);
@@ -316,9 +314,6 @@
             return;
         }
 
-        if (isTapToMoveMode() && !event.target.closest('#controls-hint')) {
-            blueTapTarget = { x: event.clientX, y: event.clientY };
-        }
     });
 
     document.addEventListener('keyup', (event) => {
@@ -386,14 +381,7 @@
         }
     }
 
-    function createIconImage(src) {
-        const image = new Image();
-        image.src = src;
-        return image;
-    }
-
     function applyMovement() {
-        updateBlueTapMovement();
         applyMovementToBody(player, movementState.blue, movementMomentum.blue);
         applyMovementToBody(aiPlayer, movementState.red, movementMomentum.red);
     }
@@ -437,24 +425,6 @@
             x: (x / length) * speed,
             y: (y / length) * speed
         });
-    }
-
-    function updateBlueTapMovement() {
-        if (!isTapToMoveMode() || !blueTapTarget) {
-            return;
-        }
-
-        movementState.blue.clear();
-
-        const dx = blueTapTarget.x - player.position.x;
-        const dy = blueTapTarget.y - player.position.y;
-
-        if (Math.sqrt(dx * dx + dy * dy) < playerRadius * 0.85) {
-            blueTapTarget = null;
-            return;
-        }
-
-        addDirectionsFromVectorToSet({ x: dx, y: dy }, movementState.blue);
     }
 
     function updateAutoRedMovement() {
@@ -722,10 +692,6 @@
         return window.matchMedia('(pointer: coarse)').matches;
     }
 
-    function isTapToMoveMode() {
-        return isTouchDevice() && state.autoRed;
-    }
-
     function getAimAngle() {
         return Date.now() / 350;
     }
@@ -768,7 +734,7 @@
     }
 
     function releaseSticks() {
-        [line, ...chaosLines].forEach((stick) => {
+        [line, startLineA, startLineB, ...chaosLines].forEach((stick) => {
             Body.setStatic(stick, false);
             Body.setVelocity(stick, {
                 x: (Math.random() - 0.5) * 3,

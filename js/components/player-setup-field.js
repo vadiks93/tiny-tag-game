@@ -12,6 +12,7 @@
             this.shadowRoot.innerHTML = `
                 <style>
                     :host { display: block; }
+                    :host([hidden]) { display: none; }
                     .field {
                         display: grid;
                         grid-template-columns: minmax(0, 1fr) 112px;

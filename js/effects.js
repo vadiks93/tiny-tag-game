@@ -37,30 +37,6 @@
         context.restore();
     }
 
-    function drawPlayerIcon(context, image, x, y, size, color) {
-        const halfSize = size / 2;
-
-        context.save();
-
-        context.beginPath();
-        context.arc(x, y, halfSize * 0.78, 0, Math.PI * 2);
-        context.fillStyle = color;
-        context.globalAlpha = 0.16;
-        context.fill();
-        context.globalAlpha = 1;
-
-        if (image.complete && image.naturalWidth > 0) {
-            context.drawImage(image, x - halfSize, y - halfSize, size, size);
-        } else {
-            context.beginPath();
-            context.arc(x, y, halfSize * 0.62, 0, Math.PI * 2);
-            context.fillStyle = color;
-            context.fill();
-        }
-
-        context.restore();
-    }
-
     function drawShieldIcon(context, x, y, size, color = '#56ccf2', outlineColor = '#2f80ed') {
         context.save();
         context.beginPath();
@@ -154,7 +130,6 @@
         drawName,
         drawInnerCircle,
         drawRotatingAimLine,
-        drawPlayerIcon,
         drawShieldIcon,
         drawShieldAura,
         drawPowerIcon,
