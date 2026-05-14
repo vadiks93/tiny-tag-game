@@ -74,7 +74,7 @@ Behavior:
 - If auto red player is enabled, red movement is controlled by simple AI instead of `W`, `A`, `S`, `D`.
 - If auto red player is enabled, the control hint shows only the blue arrow controls and centers them near the bottom.
 - On touch/mobile devices, Single Player is forced because two-player controls work better on desktop.
-- On touch/mobile single-player, larger virtual arrow controls are placed on the left side for blue movement.
+- On touch/mobile single-player, a floating joystick is placed on the left side for blue movement.
 - On touch/mobile, a virtual shoot button appears under the HUD only when blue/human is catching.
 - Touch/mobile movement speed is slightly reduced for better control.
 - Mobile touch behavior disables page zoom, text selection, and touch callouts during gameplay.

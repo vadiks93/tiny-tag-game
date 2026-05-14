@@ -275,6 +275,31 @@
             grid-column: 3;
         }
 
+        .joystick {
+            display: none;
+            position: relative;
+            width: 118px;
+            height: 118px;
+            border: 1px solid rgba(47, 128, 237, 0.35);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: inset 0 0 0 10px rgba(47, 128, 237, 0.08), 0 8px 24px rgba(0, 0, 0, 0.14);
+            touch-action: none;
+        }
+
+        .joystick-thumb {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #2f80ed;
+            box-shadow: 0 5px 14px rgba(47, 128, 237, 0.36);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
         game-welcome {
             position: fixed;
             inset: 0;
@@ -406,6 +431,21 @@
                 height: 54px;
                 font-size: 21px;
             }
+
+            #controls-hint.single-player-auto .controls-side[data-player-controls="blue"] {
+                border: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+
+            #controls-hint.single-player-auto .controls-side[data-player-controls="blue"] .keys-grid,
+            #controls-hint.single-player-auto .controls-side[data-player-controls="blue"] .controls-title {
+                display: none;
+            }
+
+            #controls-hint.single-player-auto .joystick {
+                display: block;
+            }
         }
 
         @media (max-height: 430px) and (orientation: landscape) {
@@ -488,6 +528,16 @@
                 height: 44px;
                 font-size: 17px;
             }
+
+            .joystick {
+                width: 96px;
+                height: 96px;
+            }
+
+            .joystick-thumb {
+                width: 40px;
+                height: 40px;
+            }
         }
     </style>
 </head>
@@ -523,6 +573,9 @@
                     <button class="key key-left" type="button" data-player="blue" data-direction="left">&larr;</button>
                     <button class="key key-down" type="button" data-player="blue" data-direction="down">&darr;</button>
                     <button class="key key-right" type="button" data-player="blue" data-direction="right">&rarr;</button>
+                </div>
+                <div class="joystick" data-player="blue" aria-label="Blue movement joystick" role="application">
+                    <div class="joystick-thumb"></div>
                 </div>
             </div>
         </div>

@@ -351,6 +351,56 @@
         button.addEventListener('pointerleave', release);
     });
 
+    document.querySelectorAll('.joystick[data-player]').forEach((joystick) => {
+        const thumb = joystick.querySelector('.joystick-thumb');
+        const playerId = joystick.dataset.player;
+
+        const move = (event) => {
+            event.preventDefault();
+
+            if (state.autoRed && playerId === 'red') {
+                return;
+            }
+
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const maxDistance = rect.width * 0.32;
+            const dx = event.clientX - centerX;
+            const dy = event.clientY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+            const clampedDistance = Math.min(distance, maxDistance);
+            const thumbX = (dx / distance) * clampedDistance;
+            const thumbY = (dy / distance) * clampedDistance;
+
+            thumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
+            movementState[playerId].clear();
+
+            if (distance > rect.width * 0.12) {
+                addDirectionsFromVectorToSet({ x: dx, y: dy }, movementState[playerId]);
+            }
+        };
+        const release = () => {
+            movementState[playerId].clear();
+            thumb.style.transform = 'translate(-50%, -50%)';
+        };
+
+        joystick.addEventListener('pointerdown', (event) => {
+            joystick.setPointerCapture(event.pointerId);
+            move(event);
+        });
+        joystick.addEventListener('pointermove', (event) => {
+            if (!joystick.hasPointerCapture(event.pointerId)) {
+                return;
+            }
+
+            move(event);
+        });
+        joystick.addEventListener('pointerup', release);
+        joystick.addEventListener('pointercancel', release);
+        joystick.addEventListener('lostpointercapture', release);
+    });
+
     function setKeyboardMovement(key, isPressed) {
         const keyMap = {
             ArrowLeft: ['blue', 'left'],
