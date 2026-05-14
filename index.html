@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tiny Tag Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background: #ffffff;
+            color: #222;
+        }
+
+        main {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        h1 {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1;
+            margin: 0;
+            color: #222;
+            font-size: 24px;
+        }
+
+        #hud {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1;
+            display: grid;
+            gap: 4px;
+            min-width: 180px;
+            padding: 10px 12px;
+            border: 1px solid #d4d8df;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 700;
+        }
+
+        #score {
+            color: #4b5563;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        #game-over {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 1;
+            display: grid;
+            gap: 6px;
+            min-width: min(360px, calc(100vw - 32px));
+            padding: 16px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.78);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
+            color: #222222;
+            text-align: center;
+            transform: translate(-50%, -50%);
+        }
+
+        #game-over[hidden] {
+            display: none;
+        }
+
+        #game-over-title {
+            font-size: 34px;
+            font-weight: 800;
+        }
+
+        #game-over-message {
+            color: #4b5563;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        #log {
+            position: fixed;
+            right: 16px;
+            bottom: 72px;
+            z-index: 1;
+            width: min(360px, calc(100vw - 32px));
+            max-height: 160px;
+            overflow: auto;
+            margin: 0;
+            padding: 12px;
+            border: 1px solid #d4d8df;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            white-space: pre-wrap;
+            font: 14px/1.4 Consolas, monospace;
+        }
+
+        #log[hidden] {
+            display: none;
+        }
+
+        #log-toggle {
+            position: fixed;
+            right: 18px;
+            bottom: 14px;
+            z-index: 1;
+            width: 38px;
+            height: 38px;
+            border: 1px solid #ffffff;
+            border-radius: 50%;
+            background: #2f80ed;
+            color: #ffffff;
+            cursor: pointer;
+            font: 700 20px/1 Arial, sans-serif;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        #controls-hint {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: center;
+            width: min(520px, calc(100vw - 32px));
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.62);
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
+            transform: translateX(-50%);
+            transition: opacity 180ms ease, transform 180ms ease;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        #controls-hint[hidden] {
+            display: none;
+        }
+
+        #controls-hint.fading {
+            opacity: 0;
+            transform: translateX(-50%) translateY(10px);
+        }
+
+        #controls-hint.single-player-auto {
+            grid-template-columns: 1fr;
+            width: auto;
+        }
+
+        #controls-hint.single-player-auto .controls-side[data-player-controls="red"] {
+            display: none;
+        }
+
+        .controls-side {
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+        }
+
+        .controls-title {
+            color: #333333;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 34px);
+            grid-template-rows: repeat(2, 34px);
+            gap: 6px;
+        }
+
+        .key {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #b8c0cc;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #222;
+            cursor: pointer;
+            padding: 0;
+            font: 700 15px/1 Arial, sans-serif;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+        }
+
+        .key:active,
+        .key.is-pressed {
+            background: #2f80ed;
+            border-color: #2f80ed;
+            color: #ffffff;
+            transform: translateY(1px);
+        }
+
+        .key-up {
+            grid-column: 2;
+        }
+
+        .key-left {
+            grid-column: 1;
+        }
+
+        .key-down {
+            grid-column: 2;
+        }
+
+        .key-right {
+            grid-column: 3;
+        }
+
+        game-welcome {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+        }
+
+        @media (max-width: 700px) {
+            h1 {
+                top: 10px;
+                left: 10px;
+                font-size: 18px;
+            }
+
+            #hud {
+                top: 10px;
+                right: 10px;
+                min-width: 136px;
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            #score {
+                font-size: 11px;
+            }
+
+            #game-over {
+                padding: 12px 14px;
+            }
+
+            #game-over-title {
+                font-size: 26px;
+            }
+
+            #game-over-message {
+                font-size: 13px;
+            }
+
+            #controls-hint {
+                bottom: 58px;
+                gap: 12px;
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.76);
+            }
+
+            .controls-title {
+                font-size: 11px;
+            }
+
+            .keys-grid {
+                grid-template-columns: repeat(3, 28px);
+                grid-template-rows: repeat(2, 28px);
+                gap: 4px;
+            }
+
+            .key {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
+            #log {
+                right: 10px;
+                bottom: 62px;
+                width: min(320px, calc(100vw - 20px));
+                max-height: 126px;
+                font-size: 12px;
+            }
+
+            #log-toggle {
+                right: 12px;
+                bottom: 10px;
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+            }
+        }
+
+        @media (pointer: coarse) {
+            #controls-hint {
+                left: 0;
+                right: 0;
+                bottom: 14px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                width: auto;
+                padding: 0 12px;
+                border: 0;
+                background: transparent;
+                box-shadow: none;
+                transform: none;
+                pointer-events: none;
+            }
+
+            #controls-hint.fading {
+                opacity: 1;
+                transform: none;
+            }
+
+            #controls-hint.single-player-auto {
+                justify-content: center;
+            }
+
+            .controls-side {
+                padding: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.7);
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.72);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+                pointer-events: auto;
+            }
+
+            .keys-grid {
+                grid-template-columns: repeat(3, 34px);
+                grid-template-rows: repeat(2, 34px);
+                gap: 5px;
+            }
+
+            .key {
+                width: 34px;
+                height: 34px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-height: 430px) and (orientation: landscape) {
+            h1 {
+                font-size: 16px;
+            }
+
+            #hud {
+                grid-template-columns: auto auto;
+                gap: 10px;
+                min-width: 0;
+            }
+
+            #controls-hint {
+                left: 16px;
+                right: auto;
+                bottom: 10px;
+                width: min(390px, calc(100vw - 74px));
+                transform: none;
+            }
+
+            #controls-hint.single-player-auto {
+                left: 50%;
+                right: auto;
+                width: auto;
+                transform: translateX(-50%);
+            }
+
+            #controls-hint.fading {
+                transform: translateY(10px);
+            }
+
+            #controls-hint.single-player-auto.fading {
+                transform: translateX(-50%) translateY(10px);
+            }
+        }
+
+        @media (pointer: coarse) and (max-height: 430px) and (orientation: landscape) {
+            #controls-hint,
+            #controls-hint.fading {
+                left: 0;
+                right: 0;
+                bottom: 8px;
+                width: auto;
+                transform: none;
+            }
+
+            #controls-hint.single-player-auto,
+            #controls-hint.single-player-auto.fading {
+                left: 0;
+                right: 0;
+                transform: none;
+            }
+
+            .controls-side {
+                padding: 6px;
+            }
+
+            .controls-title {
+                display: none;
+            }
+
+            .keys-grid {
+                grid-template-columns: repeat(3, 30px);
+                grid-template-rows: repeat(2, 30px);
+                gap: 4px;
+            }
+
+            .key {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <game-welcome></game-welcome>
+
+    <main>
+        <h1>Tiny Tag Game</h1>
+        <div id="hud">
+            <div id="timer">Time: --</div>
+            <div id="score">Score: 0 - 0</div>
+        </div>
+        <div id="game-over" hidden aria-live="polite">
+            <div id="game-over-title">Game Over</div>
+            <div id="game-over-message"></div>
+        </div>
+        <div id="game"></div>
+        <div id="controls-hint" hidden>
+            <div class="controls-side" data-player-controls="red">
+                <div class="controls-title">Red movement</div>
+                <div class="keys-grid" aria-label="WASD controls">
+                    <button class="key key-up" type="button" data-player="red" data-direction="up">W</button>
+                    <button class="key key-left" type="button" data-player="red" data-direction="left">A</button>
+                    <button class="key key-down" type="button" data-player="red" data-direction="down">S</button>
+                    <button class="key key-right" type="button" data-player="red" data-direction="right">D</button>
+                </div>
+            </div>
+            <div class="controls-side" data-player-controls="blue">
+                <div class="controls-title">Blue movement</div>
+                <div class="keys-grid" aria-label="Arrow key controls">
+                    <button class="key key-up" type="button" data-player="blue" data-direction="up">&uarr;</button>
+                    <button class="key key-left" type="button" data-player="blue" data-direction="left">&larr;</button>
+                    <button class="key key-down" type="button" data-player="blue" data-direction="down">&darr;</button>
+                    <button class="key key-right" type="button" data-player="blue" data-direction="right">&rarr;</button>
+                </div>
+            </div>
+        </div>
+        <button id="log-toggle" type="button" aria-expanded="false" aria-controls="log controls-hint" title="Show help">?</button>
+        <pre id="log" hidden></pre>
+    </main>
+
+    <script src="./node_modules/matter-js/build/matter.min.js"></script>
+    <script src="./js/game-rules.js"></script>
+    <script src="./js/components/player-setup-field.js"></script>
+    <script src="./js/components/game-welcome.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/effects.js"></script>
+    <script src="./js/game.js"></script>
+</body>
+</html>

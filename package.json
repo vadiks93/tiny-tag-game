@@ -1,0 +1,21 @@
+{
+  "name": "matter-js-game",
+  "version": "1.0.0",
+  "description": "defining a new game using matter.js API, TODO ",
+  "keywords": [
+    "js",
+    "matter.js"
+  ],
+  "license": "ISC",
+  "author": "Vadim Panainte",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node server.js",
+    "test": "node scripts/test.js"
+  },
+  "dependencies": {
+    "matter-js": "^0.20.0"
+  }
+}
