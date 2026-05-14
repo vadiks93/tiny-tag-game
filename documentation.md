@@ -77,6 +77,7 @@ Behavior:
 - On touch/mobile single-player, larger virtual arrow controls are placed on the left side for blue movement.
 - On touch/mobile, a virtual shoot button appears under the HUD only when blue/human is catching.
 - Touch/mobile movement speed is slightly reduced for better control.
+- Mobile touch behavior disables page zoom, text selection, and touch callouts during gameplay.
 - Holding exactly one movement direction builds a capped acceleration bonus over a short ramp. Changing direction, pressing multiple directions, or moving diagonally resets that bonus.
 
 Only the catcher shows:
