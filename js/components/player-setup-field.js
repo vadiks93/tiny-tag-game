@@ -98,8 +98,28 @@
                         outline: 2px solid #111827;
                         outline-offset: 2px;
                     }
+                    .switch-control input:disabled + .switch {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
                     .switch-text {
                         white-space: nowrap;
+                    }
+                    .info-button {
+                        display: none;
+                        width: 24px;
+                        height: 24px;
+                        border: 1px solid #b8c0cc;
+                        border-radius: 50%;
+                        background: #ffffff;
+                        color: #4b5563;
+                        cursor: pointer;
+                        padding: 0;
+                        font: 700 14px/1 Arial, sans-serif;
+                    }
+                    .info-button.visible {
+                        display: grid;
+                        place-items: center;
                     }
                     .placeholder-control {
                         min-height: 32px;
@@ -141,12 +161,13 @@
                 </style>
                 <div class="field">
                     ${hasSinglePlayerToggle ? `
-                        <label class="switch-control top-control">
-                            <input id="single-player" type="checkbox">
-                            <span class="switch" aria-hidden="true"></span>
-                            <span class="switch-text">Single Player</span>
-                        </label>
-                    ` : ''}
+                            <label class="switch-control top-control">
+                                <input id="single-player" type="checkbox">
+                                <span class="switch" aria-hidden="true"></span>
+                                <span class="switch-text">Single Player</span>
+                                <button id="single-player-info" class="info-button" type="button" title="Mobile uses single player">?</button>
+                            </label>
+                        ` : ''}
                     <label>
                         <span class="label-text">${label}</span>
                         <input type="text" value="${defaultName}" maxlength="${maxLength}" autocomplete="off">
@@ -165,6 +186,15 @@
 
             this.setupSwitch('escaping-toggle', 'escaping-change');
             this.setupSwitch('single-player', 'single-player-change');
+
+            const singlePlayerInfo = this.shadowRoot.getElementById('single-player-info');
+
+            if (singlePlayerInfo) {
+                singlePlayerInfo.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.dispatchEvent(new CustomEvent('single-player-info', { bubbles: true }));
+                });
+            }
         }
 
         setupSwitch(id, eventName) {
@@ -197,8 +227,8 @@
             return this.shadowRoot.querySelector('input[type="text"]').value.trim();
         }
 
-        focusInput() {
-            this.shadowRoot.querySelector('input[type="text"]').focus();
+        focusCheckbox() {
+            this.shadowRoot.querySelector('input[type="checkbox"]').focus();
         }
 
         get escaping() {
@@ -224,6 +254,19 @@
 
             if (input) {
                 input.checked = Boolean(value);
+            }
+        }
+
+        set singlePlayerDisabled(value) {
+            const input = this.shadowRoot.getElementById('single-player');
+            const info = this.shadowRoot.getElementById('single-player-info');
+
+            if (input) {
+                input.disabled = Boolean(value);
+            }
+
+            if (info) {
+                info.classList.toggle('visible', Boolean(value));
             }
         }
 

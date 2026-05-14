@@ -44,6 +44,7 @@ Setup fields:
 Behavior:
 
 - Blue player input is focused on load.
+- Mobile landscape uses a compact setup layout with numeric settings in one row.
 - Pressing `Enter` submits the modal unless focus is on a switch.
 - Switches support `Space` natively and also toggle on `Enter`.
 - The modal opens with Single Player enabled by default.
@@ -71,6 +72,10 @@ Behavior:
 - Current catcher shoots with `Space`.
 - If auto red player is enabled, red movement is controlled by simple AI instead of `W`, `A`, `S`, `D`.
 - If auto red player is enabled, the control hint shows only the blue arrow controls and centers them near the bottom.
+- On touch/mobile devices, Single Player is forced because two-player controls work better on desktop.
+- On touch/mobile single-player, tapping the arena moves blue toward the tapped point instead of relying on arrow controls.
+- On touch/mobile, a virtual shoot button appears under the HUD only when blue/human is catching.
+- Touch/mobile movement speed is slightly reduced for better control.
 - Holding exactly one movement direction builds a capped acceleration bonus over a short ramp. Changing direction, pressing multiple directions, or moving diagonally resets that bonus.
 
 Only the catcher shows:
@@ -78,7 +83,7 @@ Only the catcher shows:
 - black center dot
 - rotating aim line
 
-The dot and aim line are canvas-only visuals.
+The dot and aim line are canvas-only visuals and scale down on mobile.
 
 ## Roles
 
@@ -163,12 +168,14 @@ The Matter world includes:
 - right wall
 - one initial diagonal line
 - random chaos lines
+- players start near opposite horizontal sides so the round begins with more distance
 
 Chaos lines:
 
 - are straight static rectangle bodies
 - spawn faster over time
 - use random position, length, thickness, angle, and color
+- are shorter and thinner on mobile, with smaller mobile player bodies for extra room
 - expire after a delay
 - have a growing active cap up to `32`
 

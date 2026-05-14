@@ -10,14 +10,16 @@
     const rules = window.GameRules;
     const effects = window.GameEffects;
     const ui = window.GameUi.createGameUi();
+    const mobileShootButton = document.getElementById('mobile-shoot');
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const mobileScale = Math.min(width, height) < 520 ? 0.78 : 1;
+    const isMobileViewport = Math.min(width, height) < 520;
+    const mobileScale = isMobileViewport ? 0.52 : 1;
     const playerRadius = 24 * mobileScale;
     const wallThickness = 60;
     const groundHeight = 60 * mobileScale;
-    const initialLineWidth = Math.min(500, width * 0.62);
-    const obstacleThickness = Math.max(4, 6 * mobileScale);
+    const initialLineWidth = Math.min(isMobileViewport ? 380 : 500, width * (isMobileViewport ? 0.5 : 0.62));
+    const obstacleThickness = Math.max(2.5, 5 * mobileScale);
     const initialLineThickness = obstacleThickness;
     const playerIconSize = playerRadius * 2.55;
     const state = {
@@ -47,6 +49,7 @@
     let powerPickup = null;
     let catcherHasPowerShot = false;
     let nextChaosLineIsHorizontal = true;
+    let blueTapTarget = null;
 
     const chaosLines = [];
     const bombs = [];
@@ -81,14 +84,14 @@
         }
     });
 
-    const player = Bodies.circle(width * 0.75, height * 0.3, playerRadius, {
+    const player = Bodies.circle(width * 0.82, height * 0.25, playerRadius, {
         label: state.playerName,
         restitution: 0.8,
         frictionAir: 0.04,
         collisionFilter: { group: -1 },
         render: { visible: false }
     });
-    const aiPlayer = Bodies.circle(width * 0.25, height * 0.3, playerRadius, {
+    const aiPlayer = Bodies.circle(width * 0.18, height * 0.25, playerRadius, {
         label: state.aiName,
         restitution: 0.8,
         frictionAir: 0.035,
@@ -158,8 +161,8 @@
             effects.drawPlayerIcon(context, humanIcon, player.position.x, player.position.y, playerIconSize, '#2f80ed');
 
             if (catcherBody === player) {
-                effects.drawRotatingAimLine(context, player.position.x, player.position.y, getAimAngle());
-                effects.drawInnerCircle(context, player.position.x, player.position.y);
+                effects.drawRotatingAimLine(context, player.position.x, player.position.y, getAimAngle(), mobileScale);
+                effects.drawInnerCircle(context, player.position.x, player.position.y, mobileScale);
             }
 
             effects.drawName(context, `${state.playerName} (${state.playerRole})`, player.position.x, player.position.y - 32 * mobileScale, '#2f80ed');
@@ -169,8 +172,8 @@
             effects.drawPlayerIcon(context, aiIcon, aiPlayer.position.x, aiPlayer.position.y, playerIconSize, '#eb5757');
 
             if (catcherBody === aiPlayer) {
-                effects.drawRotatingAimLine(context, aiPlayer.position.x, aiPlayer.position.y, getAimAngle());
-                effects.drawInnerCircle(context, aiPlayer.position.x, aiPlayer.position.y);
+                effects.drawRotatingAimLine(context, aiPlayer.position.x, aiPlayer.position.y, getAimAngle(), mobileScale);
+                effects.drawInnerCircle(context, aiPlayer.position.x, aiPlayer.position.y, mobileScale);
             }
 
             effects.drawName(context, `${state.aiName} (${state.aiRole})`, aiPlayer.position.x, aiPlayer.position.y - 32 * mobileScale, '#eb5757');
@@ -236,6 +239,7 @@
         aiPlayer.label = state.aiName;
         state.gameStarted = true;
         state.gameOver = false;
+        blueTapTarget = null;
         lastShotAt = 0;
         lastAutoShotAt = 0;
         explodedBody = null;
@@ -252,12 +256,18 @@
         startBombs();
         startShieldSpawns();
         startPowerSpawns();
-        ui.showControlsHint({
-            autoHide: !isTouchDevice(),
-            singlePlayerAuto: state.autoRed
-        });
 
         ui.log('Tiny Tag Game started.');
+        if (isTapToMoveMode()) {
+            ui.setControlsMode(true);
+            ui.log('Tap anywhere in the arena to move the blue player.');
+        } else {
+            ui.showControlsHint({
+                autoHide: !isTouchDevice(),
+                singlePlayerAuto: state.autoRed
+            });
+        }
+        updateMobileShootButton();
         ui.log(`${state.playerName} is the blue circle and is ${state.playerRole}.`);
         ui.log(`${state.aiName} is the red circle and is ${state.aiRole}.`);
         ui.log(`Red player mode: ${state.autoRed ? 'auto' : 'manual'}.`);
@@ -293,7 +303,12 @@
     });
 
     document.addEventListener('pointerdown', (event) => {
-        if (!state.gameOver) {
+        if (state.gameOver) {
+            if (event.target.closest('#log, #log-toggle')) {
+                return;
+            }
+
+            restartGame();
             return;
         }
 
@@ -301,11 +316,22 @@
             return;
         }
 
-        restartGame();
+        if (isTapToMoveMode() && !event.target.closest('#controls-hint')) {
+            blueTapTarget = { x: event.clientX, y: event.clientY };
+        }
     });
 
     document.addEventListener('keyup', (event) => {
         setKeyboardMovement(event.key, false);
+    });
+
+    mobileShootButton.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (canManualShoot()) {
+            shootBullet();
+        }
     });
 
     document.querySelectorAll('[data-player][data-direction]').forEach((button) => {
@@ -367,13 +393,15 @@
     }
 
     function applyMovement() {
+        updateBlueTapMovement();
         applyMovementToBody(player, movementState.blue, movementMomentum.blue);
         applyMovementToBody(aiPlayer, movementState.red, movementMomentum.red);
     }
 
     function applyMovementToBody(body, directions, momentum) {
-        const baseSpeed = 10.6;
-        const maxStraightBonus = 5.2;
+        const speedScale = isTouchDevice() ? 0.82 : 1;
+        const baseSpeed = 10.6 * speedScale;
+        const maxStraightBonus = 5.2 * speedScale;
         const x = (directions.has('right') ? 1 : 0) - (directions.has('left') ? 1 : 0);
         const y = (directions.has('down') ? 1 : 0) - (directions.has('up') ? 1 : 0);
 
@@ -409,6 +437,24 @@
             x: (x / length) * speed,
             y: (y / length) * speed
         });
+    }
+
+    function updateBlueTapMovement() {
+        if (!isTapToMoveMode() || !blueTapTarget) {
+            return;
+        }
+
+        movementState.blue.clear();
+
+        const dx = blueTapTarget.x - player.position.x;
+        const dy = blueTapTarget.y - player.position.y;
+
+        if (Math.sqrt(dx * dx + dy * dy) < playerRadius * 0.85) {
+            blueTapTarget = null;
+            return;
+        }
+
+        addDirectionsFromVectorToSet({ x: dx, y: dy }, movementState.blue);
     }
 
     function updateAutoRedMovement() {
@@ -590,18 +636,22 @@
     }
 
     function addDirectionsFromVector(vector) {
+        addDirectionsFromVectorToSet(vector, movementState.red);
+    }
+
+    function addDirectionsFromVectorToSet(vector, directions) {
         const axisBias = 0.35;
 
         if (vector.x > axisBias) {
-            movementState.red.add('right');
+            directions.add('right');
         } else if (vector.x < -axisBias) {
-            movementState.red.add('left');
+            directions.add('left');
         }
 
         if (vector.y > axisBias) {
-            movementState.red.add('down');
+            directions.add('down');
         } else if (vector.y < -axisBias) {
-            movementState.red.add('up');
+            directions.add('up');
         }
     }
 
@@ -672,12 +722,20 @@
         return window.matchMedia('(pointer: coarse)').matches;
     }
 
+    function isTapToMoveMode() {
+        return isTouchDevice() && state.autoRed;
+    }
+
     function getAimAngle() {
         return Date.now() / 350;
     }
 
     function canManualShoot() {
         return !state.autoRed || state.playerRole === 'catching';
+    }
+
+    function updateMobileShootButton() {
+        mobileShootButton.classList.toggle('is-visible', isTouchDevice() && state.playerRole === 'catching');
     }
 
     function restartGame() {
@@ -801,7 +859,7 @@
         }
 
         const colors = ['#6b7280', '#9b51e0', '#f2994a', '#27ae60', '#eb5757'];
-        const lineWidth = (90 + Math.random() * 250) * mobileScale;
+        const lineWidth = (isMobileViewport ? 70 + Math.random() * 170 : 90 + Math.random() * 250) * mobileScale;
         const lineThickness = obstacleThickness;
         const position = findFarthestChaosPosition(lineWidth);
         const angle = nextChaosLineIsHorizontal ? 0 : Math.PI / 2;

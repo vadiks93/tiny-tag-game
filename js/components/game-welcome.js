@@ -45,6 +45,22 @@
                         font-size: 14px;
                         font-weight: 700;
                     }
+                    .settings-grid {
+                        display: grid;
+                    }
+                    .setup-note {
+                        margin: 0 0 12px;
+                        padding: 10px 12px;
+                        border: 1px solid #d4d8df;
+                        border-radius: 8px;
+                        background: #f8fafc;
+                        color: #4b5563;
+                        font-size: 13px;
+                        line-height: 1.35;
+                    }
+                    .setup-note[hidden] {
+                        display: none;
+                    }
                     input {
                         height: 40px;
                         padding: 0 10px;
@@ -114,25 +130,42 @@
                         .timer-field {
                             margin-bottom: 8px;
                         }
+
+                        .settings-grid {
+                            grid-template-columns: repeat(3, minmax(0, 1fr));
+                            gap: 8px;
+                        }
+
+                        .settings-grid .timer-field {
+                            margin-bottom: 0;
+                        }
+
+                        .settings-grid input {
+                            width: 100%;
+                            box-sizing: border-box;
+                        }
                     }
                 </style>
                 <div class="backdrop">
                     <form>
                         <h2>Tiny Tag Game</h2>
+                        <p id="setup-note" class="setup-note" hidden></p>
                         <player-setup-field id="player-field" label="Blue player" value="Replaceable Human" maxlength="24" escaping escaping-toggle single-player-toggle></player-setup-field>
                         <player-setup-field id="ai-field" label="Red player" value="Mischievous AI" maxlength="18"></player-setup-field>
-                        <label class="timer-field">
-                            Seconds to catch
-                            <input id="round-time" type="number" value="60" min="5" max="180" step="5">
-                        </label>
-                        <label class="timer-field">
-                            Max traps
-                            <input id="trap-count" type="number" value="3" min="1" max="12" step="1">
-                        </label>
-                        <label class="timer-field">
-                            Shot delay seconds
-                            <input id="shot-delay" type="number" value="1.2" min="0.3" max="5" step="0.1">
-                        </label>
+                        <div class="settings-grid">
+                            <label class="timer-field">
+                                Seconds to catch
+                                <input id="round-time" type="number" value="60" min="5" max="180" step="5">
+                            </label>
+                            <label class="timer-field">
+                                Max traps
+                                <input id="trap-count" type="number" value="3" min="1" max="12" step="1">
+                            </label>
+                            <label class="timer-field">
+                                Shot delay seconds
+                                <input id="shot-delay" type="number" value="1.2" min="0.3" max="5" step="0.1">
+                            </label>
+                        </div>
                         <button type="submit">Start Game</button>
                     </form>
                 </div>
@@ -141,15 +174,21 @@
             const playerField = this.shadowRoot.getElementById('player-field');
             const aiField = this.shadowRoot.getElementById('ai-field');
             const form = this.shadowRoot.querySelector('form');
-            const shouldDefaultToSinglePlayer = sessionStorage.getItem('tiny-tag-restart-single-player') !== 'false';
+            const setupNote = this.shadowRoot.getElementById('setup-note');
+            const mobileSetup = isMobileSetup();
+            const shouldDefaultToSinglePlayer = mobileSetup || sessionStorage.getItem('tiny-tag-restart-single-player') !== 'false';
 
             sessionStorage.removeItem('tiny-tag-restart-single-player');
 
-            playerField.focusInput();
+            playerField.focusCheckbox();
 
             if (shouldDefaultToSinglePlayer) {
                 playerField.singlePlayer = true;
                 aiField.disabled = true;
+            }
+
+            if (mobileSetup) {
+                playerField.singlePlayerDisabled = true;
             }
 
             this.shadowRoot.addEventListener('escaping-change', (event) => {
@@ -158,6 +197,10 @@
 
             this.shadowRoot.addEventListener('single-player-change', (event) => {
                 aiField.disabled = event.detail.enabled;
+            });
+
+            this.shadowRoot.addEventListener('single-player-info', () => {
+                showSetupNote(setupNote, 'Mobile uses Single Player because two-player controls work better on desktop.');
             });
 
             this.shadowRoot.addEventListener('keydown', (event) => {
@@ -194,6 +237,15 @@
                 this.remove();
             });
         }
+    }
+
+    function isMobileSetup() {
+        return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
+    }
+
+    function showSetupNote(element, message) {
+        element.textContent = message;
+        element.hidden = false;
     }
 
     customElements.define('game-welcome', GameWelcome);

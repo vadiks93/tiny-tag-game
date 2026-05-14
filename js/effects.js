@@ -12,17 +12,17 @@
         context.restore();
     }
 
-    function drawInnerCircle(context, x, y) {
+    function drawInnerCircle(context, x, y, scale = 1) {
         context.save();
         context.beginPath();
-        context.arc(x, y, 6, 0, Math.PI * 2);
+        context.arc(x, y, Math.max(3, 6 * scale), 0, Math.PI * 2);
         context.fillStyle = '#000000';
         context.fill();
         context.restore();
     }
 
-    function drawRotatingAimLine(context, x, y, angle) {
-        const length = 34;
+    function drawRotatingAimLine(context, x, y, angle, scale = 1) {
+        const length = Math.max(20, 34 * scale);
         const endX = x + Math.cos(angle) * length;
         const endY = y + Math.sin(angle) * length;
 
@@ -30,7 +30,7 @@
         context.beginPath();
         context.moveTo(x, y);
         context.lineTo(endX, endY);
-        context.lineWidth = 4;
+        context.lineWidth = Math.max(2, 4 * scale);
         context.lineCap = 'round';
         context.strokeStyle = '#000000';
         context.stroke();
